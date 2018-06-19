@@ -1,0 +1,120 @@
+\documentclass[a4paper]{article}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{hyperref}
+\usepackage{indentfirst}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{here}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{caption}
+\graphicspath{{graphics/}}
+\usepackage[left=2cm,right=2cm,
+top=2cm,bottom=2cm,bindingoffset=0cm]{geometry}
+\usepackage{listings}
+\lstset{ %
+	extendedchars=\true,
+	keepspaces=true,
+	language=bash,					% choose the language of the code
+	basicstyle=\footnotesize,		% the size of the fonts that are used for the code
+	numbers=left,					% where to put the line-numbers
+	numberstyle=\footnotesize,		% the size of the fonts that are used for the line-numbers
+	stepnumber=1,					% the step between two line-numbers. If it is 1 each line will be numbered
+	numbersep=5pt,					% how far the line-numbers are from the code
+	backgroundcolor=\color{white},	% choose the background color. You must add \usepackage{color}
+	showspaces=false				% show spaces adding particular underscores
+	showstringspaces=false,			% underline spaces within strings
+	showtabs=false,					% show tabs within strings adding particular underscores
+	frame=single,           		% adds a frame around the code
+	tabsize=2,						% sets default tabsize to 2 spaces
+	captionpos=b,					% sets the caption-position to bottom
+	breaklines=true,				% sets automatic line breaking
+	breakatwhitespace=false,		% sets if automatic breaks should only happen at whitespace
+	escapeinside={\%*}{*)},			% if you want to add a comment within your code
+	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\color{red}\hookrightarrow\space}}
+}
+
+\begin{document}	% начало документа
+
+\begin{titlepage}	% начало титульной страницы
+
+	\begin{center}		% выравнивание по центру
+
+		\large Санкт-Петербургский Политехнический Университет Петра Великого\\
+		\large Институт компьютерных наук и технологий \\
+		\large Кафедра компьютерных систем и программных технологий\\[6cm]
+		% название института, затем отступ 6см
+		
+		\huge Телекоммуникационные технологии\\[0.5cm] % название работы, затем отступ 0,5см
+		\large Отчет по лабораторной работе №8 \\[0.2cm]
+		\large\textbf{"Модель телекоммуникационного канала"}\\[5cm]
+
+	\end{center}
+
+
+	\begin{flushright} % выравнивание по правому краю
+		\begin{minipage}{0.25\textwidth} % врезка в половину ширины текста
+			\begin{flushleft} % выровнять её содержимое по левому краю
+
+				\large\textbf{Работу выполнила:}\\
+				\large Власова А.В.\\
+				\large {Группа:} 33501/4\\
+				
+				\large \textbf{Преподаватель:}\\
+				\large Богач Н.В.\
+
+			\end{flushleft}
+		\end{minipage}
+	\end{flushright}
+	
+	\vfill % заполнить всё доступное ниже пространство
+
+	\begin{center}
+	\large Санкт-Петербург\\
+	\large \the\year % вывести дату
+	\end{center} % закончить выравнивание по центру
+
+\thispagestyle{empty} % не нумеровать страницу
+\end{titlepage} % конец титульной страницы
+
+\vfill % заполнить всё доступное ниже пространство
+
+\section{Постановка задачи}
+	Пакетный сигнал длительностью 200 мкс состоит из 64 бит полезной информации и 8 нулевых tail-бит. В нулевом 16-битном слове пакета передается ID, в первом - период излучения в мс, во втором – сквозной номер пакета, в третьем - контрольная сумма (CRC-16). На передающей стороне пакет сформированный таким образом проходит следующие этапы
+	обработки:
+	\begin{itemize}
+		\item  Помехоустойчивое кодирование сверточным кодом с образующими полиномами 753, 561( octal ) и кодовым ограничением 9. На выходе кодера количество бит становится равным 144.
+		\item Перемежение бит. Количество бит на этом этапе остается неизменным
+		\item Модуляция символов. На этом этапе пакет из 144 полученных с выхода перемежителя бит разбивается на 24 символа из 6 бит. Генерируется таблица функций Уолша длиной 64 бита. Каждый 6-битный символ заменяется последовательностью Уолша, номер которой равен значению данных 6-ти бит. Т.о. на выходе модулятора получается 24 * 64 = 1536 знаковых символов.
+		\item Прямое расширение спектра. Полученная последовательность из 1536 символов периодически умножается с учетом знака на ПСП длиной 511 символов. Далее к началу сформированного символьного пакета прикрепляется немодулированная ПСП. Т.о. символьная длина становится равной 1747. Далее полученные символы модулируются методом BPSK .
+	\end{itemize}
+	Задача: по имеющейся записи сигнала из эфира и коду модели передатчика создать модель приемника, в которой найти позицию начала пакета и, выполнив операции демодуляции, деперемежения и декодирования, получить передаваемые параметры: ID, период, и номер пакета. Известно, что ID = 4, период 100 мс, номер пакета 373. Запись сделана с передискретизацией 2, т.е. одному BPSK символу соответствуют 2 лежащих друг за другом отсчета в файле. Запись сделана на нулевой частоте и представляет из себя последовательность 32-х битных комплексных	отсчетов, где младшие 16 бит вещественная часть, старшие 16 бит – мнимая часть. Ниже приведена таблица перемежения и последовательность ПСП.
+
+\section{Теоретический раздел}
+Опорная псевдослучайная последовательность (ПСП) используется при синхронизации записи сигналов, выполняемой, если параметры шума в канале неизвестны. При демодуляции и одновременном сужении спектра принятого сигнала используется обратное преобразование Уолша-Адамара. При синхронизации и при сужении спектра выбирается максимальный по абсолютному значению элемент строки матрицы результатов, который указывает на начало пакета (при синхронизации) или на бинарный номер строки матрицы Уолша (при сужении спектра и демодуляции).
+\section{Ход работы}
+Получим сигнал от передатчика, выделим вещественную и мнимую части.
+\captionof{lstlisting}{}
+\lstinputlisting[firstline=50, lastline=55]{../lab8.m}
+
+Проведем демодуляцию сигнала, построим матрицу Уолша.
+\captionof{lstlisting}{}
+\lstinputlisting[firstline=57, lastline=77]{../lab8.m}
+
+Переведем полученный результат в двоичный код. 
+\captionof{lstlisting}{}
+\lstinputlisting[firstline=79, lastline=91]{../lab8.m}
+
+Проведем деперемежение и декодирование.
+\captionof{lstlisting}{}
+\lstinputlisting[firstline=93, lastline=99]{../lab8.m}
+
+\section{Выводы}
+В ходе выполнения лабораторной работы разработана модель приемника данных. Для получения передаваемого сообщения приемник выполняет действия, обратные действиям передатчика: демодуляцию, деперемежение и декодирование полученных данных. Для того чтобы передача информации происходила без ошибок, на приемнике используется синхронизация записи сигнала по ПСП.
+\end{document}
+
+
+
